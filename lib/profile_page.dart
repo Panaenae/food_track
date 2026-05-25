@@ -1,5 +1,6 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:food_track/goal_calculator_page.dart';
 import 'package:food_track/models/user_profile.dart';
 import 'package:food_track/services/auth_service.dart';
 import 'package:food_track/services/user_profile_service.dart';
@@ -21,8 +22,8 @@ class ProfilePage extends StatefulWidget {
 
 class _ProfilePageState extends State<ProfilePage> {
   final _goalController = TextEditingController();
+  final _goalFocusNode = FocusNode(); // Added: Tracks if the user is typing
   bool _isSaving = false;
-  bool _goalInitialized = false;
   String? _message;
 
   AuthService get _auth => widget._authService ?? AuthService();
@@ -32,6 +33,7 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   void dispose() {
     _goalController.dispose();
+    _goalFocusNode.dispose(); // Added: Clean up the focus node
     super.dispose();
   }
 
@@ -49,7 +51,10 @@ class _ProfilePageState extends State<ProfilePage> {
 
     try {
       await _profiles.updateCalorieGoal(uid, parsed);
-      if (mounted) setState(() => _message = 'Saved!');
+      if (mounted) {
+        setState(() => _message = 'Saved!');
+        _goalFocusNode.unfocus(); // Close keyboard after saving
+      }
     } catch (e) {
       if (mounted) {
         setState(() => _message = 'Could not save. Check your connection.');
@@ -87,9 +92,15 @@ class _ProfilePageState extends State<ProfilePage> {
             }
 
             final profile = snapshot.data;
-            if (profile != null && !_goalInitialized) {
-              _goalController.text = profile.calorieGoal.toString();
-              _goalInitialized = true;
+            
+            // SYNC LOGIC: 
+            // If we have data, and the user is NOT currently typing, 
+            // update the controller to match the database.
+            if (profile != null && !_goalFocusNode.hasFocus) {
+              final goalStr = profile.calorieGoal.toString();
+              if (_goalController.text != goalStr) {
+                _goalController.text = goalStr;
+              }
             }
 
             return SingleChildScrollView(
@@ -137,6 +148,7 @@ class _ProfilePageState extends State<ProfilePage> {
                   const SizedBox(height: 8),
                   TextField(
                     controller: _goalController,
+                    focusNode: _goalFocusNode, // Connect the focus node
                     keyboardType: TextInputType.number,
                     decoration: const InputDecoration(
                       labelText: 'Calories (kcal)',
@@ -153,7 +165,18 @@ class _ProfilePageState extends State<ProfilePage> {
                             width: 22,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text('Save goal'),
+                        : const Text('Save goal manually'),
+                  ),
+                  const SizedBox(height: 12),
+                  OutlinedButton.icon(
+                    onPressed: profile == null ? null : () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => GoalCalculatorPage(profile: profile)),
+                      );
+                    },
+                    icon: const Icon(Icons.calculate_rounded),
+                    label: const Text('Help me calculate my goal'),
                   ),
                   if (_message != null) ...[
                     const SizedBox(height: 12),

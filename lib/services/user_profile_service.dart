@@ -49,4 +49,14 @@ class UserProfileService {
       SetOptions(merge: true),
     );
   }
+
+  Future<void> updateProfile(UserProfile profile) async {
+    await _doc(profile.uid).set(
+      {
+        ...profile.toMap(),
+        'updatedAt': FieldValue.serverTimestamp(),
+      },
+      SetOptions(merge: true),
+    );
+  }
 }

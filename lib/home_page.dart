@@ -140,11 +140,11 @@ class HomePage extends StatelessWidget {
                             padding: const EdgeInsets.symmetric(horizontal: 20),
                             child: _MacroRow(
                               protein: foodEntries.fold(0, (s, e) => s + (e.protein ?? 0)),
-                              proteinGoal: 120,
+                              proteinGoal: profile?.proteinGoal ?? 120,
                               carbs: foodEntries.fold(0, (s, e) => s + (e.carbs ?? 0)),
-                              carbsGoal: 250,
+                              carbsGoal: profile?.carbsGoal ?? 250,
                               fat: foodEntries.fold(0, (s, e) => s + (e.fat ?? 0)),
-                              fatGoal: 70,
+                              fatGoal: profile?.fatGoal ?? 70,
                             ),
                           ),
                         ),
@@ -208,53 +208,10 @@ class HomePage extends StatelessWidget {
                       ],
                     ),
                   ),
-                  floatingActionButton: FloatingActionButton.extended(
-                    onPressed: () => _showAddMenu(context),
-                    icon: const Icon(Icons.add_rounded),
-                    label: const Text('Add'),
-                  ),
                 );
               },
             );
           },
-        );
-      },
-    );
-  }
-
-  void _showAddMenu(BuildContext context) {
-    // We find the state here, before entering the bottom sheet context
-    final mainShell = MainShell.of(context);
-
-    showModalBottomSheet<void>(
-      context: context,
-      showDragHandle: true,
-      builder: (sheetContext) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                ListTile(
-                  leading: const Icon(Icons.restaurant_rounded),
-                  title: const Text('Add food'),
-                  onTap: () {
-                    Navigator.pop(sheetContext);
-                    mainShell?.setIndex(3, libraryTab: 0);
-                  },
-                ),
-                ListTile(
-                  leading: const Icon(Icons.directions_run_rounded),
-                  title: const Text('Add exercise'),
-                  onTap: () {
-                    Navigator.pop(sheetContext);
-                    mainShell?.setIndex(3, libraryTab: 1);
-                  },
-                ),
-              ],
-            ),
-          ),
         );
       },
     );
